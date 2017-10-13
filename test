@@ -1,0 +1,74 @@
+#!/bin/bash
+
+set -e
+
+cd "$(dirname -- "$0")"
+
+if [[ ! -e /.dockerenv ]] #not running in docker
+then
+    ./lint
+fi
+
+T=$(mktemp -d -- "${TMPDIR:-/tmp/}$(basename -- "$0").XXXXXX")
+trap 'rm -rf -- "${T:?}"' EXIT
+
+trap 'echo "Error on line $LINENO." >&2' ERR
+
+mkdir -- "$T/src"
+cat >"$T/.backup_include" <<EOD
+$T/src
+$T/missing
+EOD
+
+! ./lnbackup "$T/.backup_include" "$T/dest" 2>/dev/null
+
+CRAZY_FILENAME='~`!@#$%^&*()-_=+[{]}'\\'|;:'"'"'",<.>? '
+echo ''          >"$T/src/$CRAZY_FILENAME"
+echo ''          >"$T/src/-hyphen"
+echo ''          >"$T/src/.hidden"
+echo ''          >"$T/src/       "
+echo 'identical' >"$T/src/identical1"
+cp -p  --         "$T/src/identical1" \
+                  "$T/src/identical2"
+echo 'different' >"$T/src/different"
+ln -s missing     "$T/src/symboliclink"
+mkdir  --         "$T/src/dir"
+mkfifo --         "$T/src/fifo"
+mkdir  --         "$T/dest"
+
+./lnbackup "$T/.backup_include" "$T/dest"
+
+[[ -d "$T/dest/Latest/$T/src" ]]
+[[ -f "$T/dest/Latest/$T/src/$CRAZY_FILENAME" ]]
+[[ -f "$T/dest/Latest/$T/src/-hyphen" ]]
+[[ -f "$T/dest/Latest/$T/src/.hidden" ]]
+[[ -f "$T/dest/Latest/$T/src/       " ]]
+[[ "$T/dest/Latest/$T/src/identical1" -ef "$T/dest/Latest/$T/src/identical2" ]]
+[[ ! ( "$T/dest/Latest/$T/src/identical1" -ef "$T/src/identical1" ) ]]
+[[ ! ( "$T/dest/Latest/$T/src/different" -ef "$T/dest/Latest/$T/src/identical1" ) ]]
+[[ -h "$T/dest/Latest/$T/src/symboliclink" ]]
+[[ -d "$T/dest/Latest/$T/src/dir" ]]
+[[ ! -e "$T/dest/Latest/$T/src/fifo" ]]
+
+cp -pPR -- "$T/dest/Latest" \
+           "$T/dest/Previous"
+cp -p   -- "$T/src/identical1" \
+           "$T/src/identical3"
+
+perl () { ! :; } #disable perl
+export -f perl
+
+sleep 1 #prevent backup from running twice in the same second
+
+./lnbackup "$T/.backup_include" "$T/dest"
+
+[[ "$T/dest/Latest/$T/src/identical1" -ef "$T/dest/Previous/$T/src/identical1" ]]
+[[ "$T/dest/Latest/$T/src/identical3" -ef "$T/dest/Previous/$T/src/identical1" ]]
+find "$T"
+
+trap - ERR
+
+if which docker >/dev/null && [[ ! -e /.dockerenv ]] #not running in docker
+then
+    docker run --rm -v "$PWD":/wd -w /wd debian ./"$(basename -- "$0")" #run in docker
+fi
