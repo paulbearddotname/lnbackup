@@ -21,3 +21,19 @@ http://paulbeard.name
 ## Install
 
     sudo install lnbackup /usr/local/bin/
+
+## Help
+
+    $ lnbackup -h
+    lnbackup version 1
+    Copyright (c) 2017 Paul Beard.
+    Website: paulbeard.name
+
+    lnbackup is a backup program capable of creating backup directories that mirror the source without duplicating unmodified files.
+
+    Usage: /usr/local/bin/lnbackup [-h] SRC_FROM DEST
+
+    Options:
+     -h       show this help
+     SRC_FROM read source list from file
+     DEST     destination directory
