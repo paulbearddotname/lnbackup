@@ -25,7 +25,7 @@ http://paulbeard.name
 ## Help
 
     $ lnbackup -h
-    lnbackup version 1
+    lnbackup version 1.1
     Copyright (c) 2017 Paul Beard.
     Website: paulbeard.name
 
