@@ -2,6 +2,11 @@
 
 set -e
 
+not ()
+{
+    ! "$@"
+}
+
 cd "$(dirname -- "$0")"
 
 if [[ ! -e /.dockerenv ]] #not running in docker
@@ -14,13 +19,26 @@ trap 'rm -rf -- "${T:?}"' EXIT
 
 trap 'echo "Error on line $LINENO." >&2' ERR
 
+echo 'Testing with a missing DEST' >&2
+
 mkdir -- "$T/src"
 cat >"$T/.backup_include" <<EOD
 $T/src
 $T/missing
 EOD
 
-! ./lnbackup "$T/.backup_include" "$T/dest" 2>/dev/null
+not ./lnbackup "$T/.backup_include" "$T/dest"
+
+echo >&2
+echo 'Testing with an existing backup' >&2
+
+mkdir  --         "$T/dest"
+
+./lnbackup "$T/.backup_include" "$T/dest"
+not ./lnbackup "$T/.backup_include" "$T/dest"
+
+echo >&2
+echo 'Testing with various file names, duplicate files, a symbolic link, a directory, and a fifo' >&2
 
 CRAZY_FILENAME='~`!@#$%^&*()-_=+[{]}'\\'|;:'"'"'",<.>? '
 echo ''          >"$T/src/$CRAZY_FILENAME"
@@ -34,7 +52,8 @@ echo 'different' >"$T/src/different"
 ln -s missing     "$T/src/symboliclink"
 mkdir  --         "$T/src/dir"
 mkfifo --         "$T/src/fifo"
-mkdir  --         "$T/dest"
+
+sleep 1 #prevent backup from running twice in the same second
 
 ./lnbackup "$T/.backup_include" "$T/dest"
 
@@ -50,6 +69,9 @@ mkdir  --         "$T/dest"
 [[ -d "$T/dest/Latest/$T/src/dir" ]]
 [[ ! -e "$T/dest/Latest/$T/src/fifo" ]]
 
+echo >&2
+echo 'Testing with a duplicate file, and without perl' >&2
+
 cp -pPR -- "$T/dest/Latest" \
            "$T/dest/Previous"
 cp -p   -- "$T/src/identical1" \
@@ -64,11 +86,15 @@ sleep 1 #prevent backup from running twice in the same second
 
 [[ "$T/dest/Latest/$T/src/identical1" -ef "$T/dest/Previous/$T/src/identical1" ]]
 [[ "$T/dest/Latest/$T/src/identical3" -ef "$T/dest/Previous/$T/src/identical1" ]]
+
+echo >&2
+
 find "$T"
 
 trap - ERR
 
 if which docker >/dev/null && [[ ! -e /.dockerenv ]] #not running in docker
 then
+    echo >&2
     docker run --rm -v "$PWD":/wd -w /wd debian ./"$(basename -- "$0")" #run in docker
 fi
