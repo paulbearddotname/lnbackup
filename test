@@ -93,7 +93,7 @@ find "$T"
 
 trap - ERR
 
-if which docker >/dev/null && [[ ! -e /.dockerenv ]] #not running in docker
+if command -v docker >/dev/null && [[ ! -e /.dockerenv ]] #not running in docker
 then
     echo >&2
     docker run --rm -v "$PWD":/wd -w /wd debian ./"$(basename -- "$0")" #run in docker
