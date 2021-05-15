@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2017 Paul Beard. All rights reserved.
+# Copyright (c) 2019 Paul Beard. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -27,8 +27,8 @@
 
 usage ()
 {
-    echo "lnbackup version 1.1.1
-Copyright (c) 2017 Paul Beard.
+    echo "lnbackup version 1.1.2
+Copyright (c) 2019 Paul Beard.
 Website: paulbeard.name
 
 lnbackup is a backup program capable of creating backup directories that mirror the source without duplicating unmodified files.
@@ -97,7 +97,7 @@ then
     findw ()
     {
         #fast find
-        perl -MFile::Find -e 'foreach(@ARGV){File::Find::find({wanted=>sub{(($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime)=lstat($_))&&(-f _||-d _||-l _)&&printf"%s\t%s\t%s\t%s\t%s\t%04o\t%s\t%s\n",-f _?"-":-d _?"d":"l",$mtime,$size,$gid,$uid,$mode&07777,$dev,$_;},no_chdir=>1},$_);}' -- "$@"
+        perl -MFile::Find -e 'use warnings "File::Find";foreach(@ARGV){File::Find::find({wanted=>sub{(($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime)=lstat($_))&&(-f _||-d _||-l _)&&printf"%s\t%s\t%s\t%s\t%s\t%04o\t%s\t%s\n",-f _?"-":-d _?"d":"l",$mtime,$size,$gid,$uid,$mode&07777,$dev,$_;},no_chdir=>1},$_);}' -- "$@"
     }
 elif find . -quit -printf '' 2>/dev/null #GNU find
 then
