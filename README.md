@@ -8,15 +8,9 @@ Unmodified backup files are hard linked.
 New backup files are created as copy-on-write duplicates of source files if possible.
 Files are also indexed by hash to identify moved, renamed, and duplicate files.
 
-Slower but more space efficient than [rsyncbackup](../../../rsyncbackup).
-
-## See also
-
-[rsyncbackup](../../../rsyncbackup)
-
 ## Website
 
-http://paulbeard.name
+https://paulbeard.name
 
 ## Install
 
