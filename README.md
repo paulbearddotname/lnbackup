@@ -19,8 +19,8 @@ https://paulbeard.name
 ## Help
 
     $ lnbackup -h
-    lnbackup version 1.2.0
-    Copyright (c) 2021 Paul Beard.
+    lnbackup version 1.3.0
+    Copyright (c) 2022 Paul Beard.
     Website: paulbeard.name
 
     lnbackup is a backup program capable of creating backup directories that mirror the source without duplicating unmodified files.
@@ -28,6 +28,6 @@ https://paulbeard.name
     Usage: /usr/local/bin/lnbackup [-h] SRC_FROM DEST
 
     Options:
-     -h       show this help
-     SRC_FROM read source list from file
-     DEST     destination directory
+    -h       show this help
+    SRC_FROM read source list from file
+    DEST     destination directory
