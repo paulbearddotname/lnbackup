@@ -97,29 +97,29 @@ then
     exit 1
 fi
 
-if perl -MFile::Find -e '' 2>/dev/null #check for perl and the File::Find perl module
+if perl -MFile::Find -e '' 2>/dev/null # Check for perl and the File::Find perl module
 then
     findw ()
     {
         #fast find
         perl -MFile::Find -e 'use warnings "File::Find";foreach(@ARGV){File::Find::find({wanted=>sub{(($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime)=lstat($_))&&(-f _||-d _||-l _)&&printf"%s\t%s\t%s\t%s\t%s\t%04o\t%s\t%s\n",-f _?"-":-d _?"d":"l",$mtime,$size,$gid,$uid,$mode&07777,$dev,$_;},no_chdir=>1},$_);}' -- "$@"
     }
-elif find . -quit -printf '' 2>/dev/null #GNU find
+elif find . -quit -printf '' 2>/dev/null # GNU find
 then
     findw ()
     {
         find -- "$@" \( -type d -o -type f -o -type l \) -printf '%.1M\t%Ts\t%s\t%G\t%U\t%.4m\t%D\t%p\n'
     }
-elif gfind . -quit -printf '' 2>/dev/null #GNU find
+elif gfind . -quit -printf '' 2>/dev/null # GNU find
 then
     findw ()
     {
         gfind -- "$@" \( -type d -o -type f -o -type l \) -printf '%.1M\t%Ts\t%s\t%G\t%U\t%.4m\t%D\t%p\n'
     }
-else #BSD stat
+else # BSD stat
     findw ()
     {
-        #slow find
+        # Slow find
         find -- "$@" \( -type d -o -type f -o -type l \) -exec stat -f '%.1Sp%t%m%t%z%t%g%t%u%t%Mp%.3Lp%t%d%t%N' {} +
     }
 fi
@@ -128,13 +128,13 @@ if perl -e '' 2>/dev/null
 then
     lnw ()
     {
-        #fast link
+        # Fast link
         perl -F'\t' -lane 'link$F[0],$F[1]or print$F[0]," ",$F[1]," link failed"' >&2
     }
 else
     lnw ()
     {
-        #slow link
+        # Slow link
         while IFS=$'\t' read -r LINK_SRC LINK_DEST; do ln -- "${LINK_SRC:?}" "${LINK_DEST:?}"; done
     }
 fi
@@ -146,13 +146,13 @@ then
 fi
 
 CP_CLONEFILE=()
-if cp -c /dev/null / 2>&1 | grep -q clonefile #check for clonefile support
+if cp -c /dev/null / 2>&1 | grep -q clonefile # Check for clonefile support
 then
     CP_CLONEFILE=(-c)
 fi
 
 CP_REFLINK=()
-if cp --reflink=auto --help 2>/dev/null >&2 #check for reflink support
+if cp --reflink=auto --help 2>/dev/null >&2 # Check for reflink support
 then
     CP_REFLINK=('--reflink=auto')
 fi
@@ -196,7 +196,7 @@ findw "${SRCS[@]}" |
 awk -F '\t' -v 'OFS=\t' -v "C=${SRC_C:?}" '{gsub(/\/\/+/,"/",$C);print}' |
 sort -t $'\t' -k "${SRC_C:?},${SRC_C:?}" |
 
-#left join latest on path
+# Full outer join latest on path
 {
     if [[ -e "${DEST:?}/Latest/" ]]
     then
@@ -236,10 +236,10 @@ do
                 "${DEST:?}/${START:?}.incomplete/${SRC:?}"
             ;;
         -)
-            if [[ "${SRC_TYPE:?}" == "${L_TYPE:?}" && "${SRC_MTIME:?}" == "${L_MTIME:?}" && "${SRC_SIZE:?}" == "${L_SIZE:?}" && "${SRC_GID:?}" == "${L_GID:?}" && "${SRC_UID:?}" == "${L_UID:?}" && "${SRC_MOD:?}" == "${L_MOD:?}" ]] #file unmodified
+            if [[ "${SRC_TYPE:?}" == "${L_TYPE:?}" && "${SRC_MTIME:?}" == "${L_MTIME:?}" && "${SRC_SIZE:?}" == "${L_SIZE:?}" && "${SRC_GID:?}" == "${L_GID:?}" && "${SRC_UID:?}" == "${L_UID:?}" && "${SRC_MOD:?}" == "${L_MOD:?}" ]] # File unmodified
             then
                 echo "${DEST:?}/Latest/${SRC:?}"$'\t'"${DEST:?}/${START:?}.incomplete/${SRC:?}"
-            else #file modified
+            else # File modified
                 if [[ "${L_TYPE:?}" == - ]]
                 then
                     echo -$'\t'"${L_MOD:?}"$'\t'"${L_UID:?}"$'\t'"${L_GID:?}"$'\t'"${L_MTIME:?}"$'\t'"${L_SIZE:?}"$'\t'"${L:?}" >&2
@@ -252,10 +252,10 @@ do
                 KEY="${HASH:?} ${SRC_MOD:?} ${SRC_UID:?} ${SRC_GID:?} ${SRC_MTIME:?} ${SRC_SIZE:?}" &&
                 KEY_P=${HASH:0:2} &&
 
-                if [[ -e "${DEST:?}/Index/${KEY_P:?}/${KEY:?}" ]] #key found in index
+                if [[ -e "${DEST:?}/Index/${KEY_P:?}/${KEY:?}" ]] # Key found in index
                 then
                     echo "${DEST:?}/Index/${KEY_P:?}/${KEY:?}"$'\t'"${DEST:?}/${START:?}.incomplete/${SRC:?}"
-                else #key not found in index
+                else # Key not found in index
                     if [[ "${SRC_DEV:?}" == "${DEST_DEV:?}" && ${#CP_REFLINK[@]} -eq 0 ]]
                     then
                         cp "${CP_CLONEFILE[@]}" -p --           "${SRC:?}" \
@@ -292,13 +292,13 @@ exit
 
 echo 'Backup complete' >&2
 
-if date -d '1970-01-01 00:00:00' >/dev/null 2>&1 #GNU date
+if date -d '1970-01-01 00:00:00' >/dev/null 2>&1 # GNU date
 then
     DATE_ISO=(-d)
 
     DAY_AGO=$(date -d -1day +%s) &&
     MONTH_AGO=$(date -d -1month +%s)
-else #BSD date
+else # BSD date
     DATE_ISO=(-j -f %Y-%m-%d' '%H:%M:%S)
 
     DAY_AGO=$(date -v -1d +%s) &&
@@ -312,8 +312,8 @@ find -- "${DEST:?}/" -mindepth 1 -maxdepth 1 -type d -name '[0-9][0-9][0-9][0-9]
 awk -F '\t' -v 'OFS=\t' -v "P=${DEST:?}" -v "C=${SRC_C:?}" 'BEGIN{L=length(P)}{$C=substr($C,L+1);sub(/^\/+/,"",$C);print}' |
 sort -t $'\t' -k "${SRC_C:?},${SRC_C:?}" |
 
-awk '$0=substr($0,1,10)" "substr($0,12,2)":"substr($0,14,2)":"substr($0,16,2)' | #%Y-%m-%d-%H%M%S -> %Y-%m-%d %H:%M:%S
-xargs -I {} date "${DATE_ISO[@]}" {} +%Y-%m-%d-%H%M%S%t%G%V%t%Y%m%d%t%s | #%Y-%m-%d %H:%M:%S -> %Y-%m-%d-%H%M%S%t%G%V%t%Y%m%d%t%s
+awk '$0=substr($0,1,10)" "substr($0,12,2)":"substr($0,14,2)":"substr($0,16,2)' | # %Y-%m-%d-%H%M%S -> %Y-%m-%d %H:%M:%S
+xargs -I {} date "${DATE_ISO[@]}" {} +%Y-%m-%d-%H%M%S%t%G%V%t%Y%m%d%t%s | # %Y-%m-%d %H:%M:%S -> %Y-%m-%d-%H%M%S%t%G%V%t%Y%m%d%t%s
 
 awk -F '\t' -v 'OFS=\t' -v "C=${WEEK_C:?}" '{if($C!=P)I=0;P=$C;print$0,I++}' |
 awk -F '\t' -v 'OFS=\t' -v "C=${DATE_C:?}" '{if($C!=P)I=0;P=$C;print$0,I++}' |
@@ -329,5 +329,5 @@ do
     rm -rf -- "${DEST:?}/${BACKUP:?}" "${DEST:?}/${BACKUP:?}.deleting"
 done
 
-#prune index
+# Prune index
 [[ ! -e ${DEST:?}/Index ]] || find -- "${DEST:?}/Index" -mindepth 2 -maxdepth 2 -type f -links 1 -delete
