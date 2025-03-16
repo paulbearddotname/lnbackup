@@ -213,10 +213,14 @@ do
         NO_SUCH_FILE_OR_DIRECTORY)
             if [[ "${L_TYPE:?}" == - ]]
             then
-                echo "${L:?}" >&2
+                echo -$'\t'"${L_MOD:?}"$'\t'"${L_UID:?}"$'\t'"${L_GID:?}"$'\t'"${L_MTIME:?}"$'\t'"${L_SIZE:?}"$'\t'"${L:?}" >&2
             fi
             ;;
         d)
+            if [[ "${L_TYPE:?}" == - ]]
+            then
+                echo -$'\t'"${L_MOD:?}"$'\t'"${L_UID:?}"$'\t'"${L_GID:?}"$'\t'"${L_MTIME:?}"$'\t'"${L_SIZE:?}"$'\t'"${L:?}" >&2
+            fi
             mkdir -m "${SRC_MOD:?}" -- "${DEST:?}/${START:?}.incomplete/${SRC:?}" &&
             if [[ "${SRC_UID:?}" != "${UID:?}" || "${SRC_GID:?}" != "${GROUPS[0]}" ]]
             then
@@ -224,6 +228,10 @@ do
             fi
             ;;
         l)
+            if [[ "${L_TYPE:?}" == - ]]
+            then
+                echo -$'\t'"${L_MOD:?}"$'\t'"${L_UID:?}"$'\t'"${L_GID:?}"$'\t'"${L_MTIME:?}"$'\t'"${L_SIZE:?}"$'\t'"${L:?}" >&2
+            fi
             cp -pPR --                          "${SRC:?}" \
                 "${DEST:?}/${START:?}.incomplete/${SRC:?}"
             ;;
@@ -232,7 +240,11 @@ do
             then
                 echo "${DEST:?}/Latest/${SRC:?}"$'\t'"${DEST:?}/${START:?}.incomplete/${SRC:?}"
             else #file modified
-                echo "${SRC:?}" >&2
+                if [[ "${L_TYPE:?}" == - ]]
+                then
+                    echo -$'\t'"${L_MOD:?}"$'\t'"${L_UID:?}"$'\t'"${L_GID:?}"$'\t'"${L_MTIME:?}"$'\t'"${L_SIZE:?}"$'\t'"${L:?}" >&2
+                fi
+                echo +$'\t'"${SRC_MOD:?}"$'\t'"${SRC_UID:?}"$'\t'"${SRC_GID:?}"$'\t'"${SRC_MTIME:?}"$'\t'"${SRC_SIZE:?}"$'\t'"${SRC:?}" >&2
 
                 HASH=$("${SHA1SUM[@]}" -b -- "${SRC:?}") &&
                 HASH=${HASH#\\} &&
