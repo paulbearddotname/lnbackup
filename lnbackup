@@ -313,7 +313,8 @@ while read -r BACKUP
 do
     echo "Removing old backup: ${BACKUP:?}" >&2
 
-    rm -rf -- "${DEST:?}/${BACKUP:?}"
+    mv -- "${DEST:?}/${BACKUP:?}" "${DEST:?}/${BACKUP:?}.deleting"
+    rm -rf -- "${DEST:?}/${BACKUP:?}" "${DEST:?}/${BACKUP:?}.deleting"
 done
 
 #prune index
