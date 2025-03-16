@@ -110,6 +110,12 @@ then
     {
         find -- "$@" \( -type d -o -type f -o -type l \) -printf '%.1M\t%Ts\t%s\t%G\t%U\t%.4m\t%D\t%p\n'
     }
+elif gfind . -quit -printf '' 2>/dev/null #GNU find
+then
+    findw ()
+    {
+        gfind -- "$@" \( -type d -o -type f -o -type l \) -printf '%.1M\t%Ts\t%s\t%G\t%U\t%.4m\t%D\t%p\n'
+    }
 else #BSD stat
     findw ()
     {
