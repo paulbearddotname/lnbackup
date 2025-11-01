@@ -33,17 +33,24 @@ Website: paulbeard.name
 
 lnbackup is a backup program capable of creating backup directories that mirror the source without duplicating unmodified files.
 
-Usage: $0 [-h] SRC_FROM DEST
+Usage: $0 [-h] [-e EXCLUDE_FROM] SRC_FROM DEST
 
 Options:
- -h       show this help
- SRC_FROM read source list from file
- DEST     destination directory" >&2
+ -h              show this help
+ -e EXCLUDE_FROM read exclude list from file
+ SRC_FROM        read source  list from file
+ DEST            destination directory" >&2
 }
 
-while getopts h OPT
+EXCLUDES=()
+while getopts he: OPT
 do
     case "${OPT?}" in
+        e)
+            IFS=$'\n' read -r -d '' -a EXCLUDES <<EOD
+$(<"${OPTARG:?}")
+EOD
+            ;;
         *)
             usage
             [[ "${OPT?}" == h ]]
@@ -51,6 +58,7 @@ do
             ;;
     esac
 done
+shift $((OPTIND-1))
 
 if [[ $# -ne 2 ]]
 then
@@ -191,6 +199,7 @@ do
 done
 
 TYPE_C=1 MTIME_C=2 SIZE_C=3 GID_C=4 UID_C=5 MOD_C=6 DEV_C=7 SRC_C=8
+LAST_EXCLUDE=
 
 findw "${SRCS[@]}" |
 awk -F '\t' -v 'OFS=\t' -v "C=${SRC_C:?}" '{gsub(/\/\/+/,"/",$C);print}' |
@@ -209,6 +218,25 @@ sort -t $'\t' -k "${SRC_C:?},${SRC_C:?}" |
 
 while IFS=$'\t' read -r SRC_TYPE SRC_MTIME SRC_SIZE SRC_GID SRC_UID SRC_MOD SRC_DEV L_TYPE L_MTIME L_SIZE L_GID L_UID L_MOD SRC L
 do
+    SKIP=1
+    for EXCLUDE in "${EXCLUDES[@]}"
+    do
+        if [[ ( "${EXCLUDE:?}" == */ && ( "${SRC_TYPE:?}" == d && ( "${SRC:?}" == "${EXCLUDE%/}" || "${SRC:?}" == */"${EXCLUDE%/}" ) || "${SRC:?}" == "${EXCLUDE%/}"/* || "${SRC:?}" == */"${EXCLUDE%/}"/* ) ) ||
+            ( "${EXCLUDE:?}" != */ && "${SRC_TYPE:?}" != d && ( "${SRC:?}" == "${EXCLUDE:?}" || "${SRC:?}" == */"${EXCLUDE:?}" ) ) ]]
+        then
+            SKIP=0
+            break
+        fi
+    done
+    if [[ "${SKIP:?}" -eq 0 ]]
+    then
+        if [[ "${LAST_EXCLUDE?}" == '' || "${SRC:?}" != "${LAST_EXCLUDE?}"/* ]]
+        then
+            echo "Excluding ${SRC:?}" >&2
+            LAST_EXCLUDE=${SRC:?}
+        fi
+        continue
+    fi
     case "${SRC_TYPE:?}" in
         NO_SUCH_FILE_OR_DIRECTORY)
             if [[ "${L_TYPE:?}" == - ]]
