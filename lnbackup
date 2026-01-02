@@ -232,7 +232,7 @@ do
     then
         if [[ "${LAST_EXCLUDE?}" == '' || "${SRC:?}" != "${LAST_EXCLUDE?}"/* ]]
         then
-            echo "Excluding ${SRC:?}" >&2
+            echo "Excluding: ${SRC:?}" >&2
             LAST_EXCLUDE=${SRC:?}
         fi
         continue
